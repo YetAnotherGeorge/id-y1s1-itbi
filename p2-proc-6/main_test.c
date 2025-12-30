@@ -32,3 +32,17 @@ void test() {
 
    printf("The term '%s' was found %d times in the text.\n", search_term, count);
 }
+
+int main(int argc, char *argv[]) {
+
+   int myvar = 0;
+   if (fork())
+      myvar = 1;
+   else if (fork())
+      myvar = 2;
+   else
+      myvar = 3;
+
+   printf("I'm %d: myvar is %d\n", getpid(), myvar);
+   return 0;
+}
