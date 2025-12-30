@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdbool.h> // pentru bool
 
@@ -48,6 +49,7 @@ bool check_substring_at_pos(const char* str_search, const char* txt, size_t chec
    }
 }
 
+int STR_MATCHES = 0;
 /**
  * Doar procesul master va procesa semnale
  */
@@ -60,6 +62,7 @@ void master_sigusr1_handler(int signum, siginfo_t* info, void* context) {
       return;
    int received_value = info->si_value.sival_int;
    printf("%s received SIGUSR1 with value: %d from \n", get_log_prefix(), received_value);
+   STR_MATCHES++;
 }
 /**
  * 
@@ -126,8 +129,11 @@ int main(int argc, char *argv[]) {
       printf("%s main_master: Warning - input parameters may be invalid: arg_search_len=%zu, arg_txt_len=%zu\n", get_log_prefix(), arg_search_len, arg_txt_len);
       return 1;
    }
-   for (size_t i = 0; i <= arg_txt_len - arg_search_len; i++) {
-      
+
+   size_t str_search_iter = arg_txt_len - arg_search_len + 1;
+   pid_t* worker_pids = malloc(str_search_iter * sizeof(pid_t));
+   
+   for (size_t i = 0; i < str_search_iter; i++) {
       pid_t pid_worker = fork();
       if (pid_worker < 0) { // could not create worker
          fprintf(stderr, "%s Fork failed for worker at index %zu\n", get_log_prefix(), i);
@@ -138,9 +144,22 @@ int main(int argc, char *argv[]) {
       }
 
       fprintf(stdout, "%s Created worker for start index %zu at ch '%c', PID: %d\n", get_log_prefix(), i, arg_txt[i], pid_worker);
+      worker_pids[i] = pid_worker;
    }
    
+   // Master process waits for all workers to finish
+   printf("%s Waiting for %zu workers to finish...\n", get_log_prefix(), str_search_iter);
+   for (size_t i = 0; i < str_search_iter; i++) {
+      int status;
+      if (waitpid(worker_pids[i], &status, 0) == -1) {
+         fprintf(stderr, "%s Error waiting for worker PID %d\n", get_log_prefix(), worker_pids[i]);
+      } else {
+         printf("%s Worker PID %d finished with status %d\n", get_log_prefix(), worker_pids[i], status);
+      }
+   }
 
+   free(worker_pids);
+   printf("%s All workers have finished. Substring matches found: %d\n", get_log_prefix(), STR_MATCHES);
    return 0;
 }
 
