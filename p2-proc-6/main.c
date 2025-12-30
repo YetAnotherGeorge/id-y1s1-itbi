@@ -25,7 +25,29 @@ bool check_substring_at_pos(const char* str_search, const char* txt, size_t chec
    }
 }
 
+/**
+ * Doar procesul master va avea acest handler atasat pentru semnalul SIGUSR1
+ */
+void master_sigusr1_handler(int signum, siginfo_t* info, void* context) {
+   int received_value = info->si_value.sival_int;
+   printf("Master Process received SIGUSR1 with value: %d from \n", received_value);
+}
+/**
+ * 
+ */
 void main_master(const char* self_name, const char* arg_search, const char* arg_txt) { 
+   // Inregistrare handler pentru SIGUSR1
+   struct sigaction sa;
+   sa.sa_flags = SA_SIGINFO;
+   sa.sa_sigaction = master_sigusr1_handler;
+   sigemptyset(&sa.sa_mask);
+   // Atasare handler
+   if (sigaction(SIGUSR1, &sa, NULL) == -1) {
+      fprintf(stderr, "could not register SIGUSR1 handler\n");
+      exit(EXIT_FAILURE);
+   }
+   
+   
    size_t arg_search_len = strlen(arg_search);
    size_t arg_txt_len = strlen(arg_txt);
 
@@ -60,7 +82,7 @@ int main(int argc, char *argv[]) {
    if (master_mode) {
       main_master(argv[0], arg_search, arg_txt);
    } else {
-      
+
    }
 
    return 0;

@@ -31,5 +31,4 @@ void test() {
    int count = search_substring(search_term, txt);
 
    printf("The term '%s' was found %d times in the text.\n", search_term, count);
-
 }
