@@ -142,11 +142,19 @@ int main(int argc, char *argv[]) {
 
    // reincearca search-ul pana cand acest array este complet populat; init to -1
    WORKER_RESULTS = (int*)malloc(str_search_iter * sizeof(int));
+   if (WORKER_RESULTS == NULL) {
+      perror("Eroare alocare memorie pentru WORKER_RESULTS");
+      exit(EXIT_FAILURE);
+   }
    for (size_t i = 0; i < str_search_iter; i++) {
       WORKER_RESULTS[i] = -1;
    }
 
    pid_t* worker_pids = malloc(str_search_iter * sizeof(pid_t));
+   if (worker_pids == NULL) {
+      perror("Eroare alocare memorie pentru worker_pids");
+      exit(EXIT_FAILURE);
+   }
    bool all_workers_done = false;
    // Reincearca pana cand toti workerii au terminat si au raportat rezultatele (signal loss protection)
    while (!all_workers_done) {

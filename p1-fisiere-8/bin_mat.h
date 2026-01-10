@@ -22,6 +22,10 @@ typedef struct BinMatrix {
  */
 BinMatrix* BinMat_create(int rows, int cols) {
    BinMatrix* bm = (BinMatrix*)malloc(sizeof(BinMatrix));
+   if (bm == NULL) {
+      perror("Eroare alocare memorie pentru BinMatrix\n");
+      return NULL;
+   }
    bm->file_identifier[0] = 'b';
    bm->file_identifier[1] = 'm';
    bm->file_identifier[2] = 'a';
@@ -30,6 +34,11 @@ BinMatrix* BinMat_create(int rows, int cols) {
    bm->cols = cols;
 
    void* alloc_data = malloc(rows * cols * sizeof(float));
+   if (alloc_data == NULL) {
+      perror("Eroare alocare memorie pentru date matrice");
+      free(bm);
+      return NULL;
+   }
    bm->data = (float*)alloc_data;
 
    for (int i = 0; i < rows * cols; i++) {
@@ -102,6 +111,10 @@ int BinMat_save_file(BinMatrix* bm, const char* filename) {
  */
 BinMatrix* BinMat_load(int fd) {
    BinMatrix* bm = (BinMatrix*)malloc(sizeof(BinMatrix));
+   if (bm == NULL) {
+      fprintf(stderr, "Eroare alocare memorie pentru BinMatrix\n");
+      return NULL;
+   }
    ssize_t read_code = 0;
 
    // bm.file_identifier
@@ -145,6 +158,11 @@ BinMatrix* BinMat_load(int fd) {
    }
    size_t alloc_count = bm->rows * bm->cols;
    bm->data = (float*)malloc(alloc_count * sizeof(float));
+   if (bm->data == NULL) {
+      perror("Eroare alocare memorie pentru date matrice");
+      free(bm);
+      return NULL;
+   }
    read_code = read(fd, bm->data, alloc_count * sizeof(float));
    if (read_code == -1) {
       fprintf(stderr, "Eroare citire date matrice");
