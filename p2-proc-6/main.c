@@ -155,9 +155,11 @@ int main(int argc, char *argv[]) {
       perror("Eroare alocare memorie pentru worker_pids");
       exit(EXIT_FAILURE);
    }
+   int launch_iter = 0;
    bool all_workers_done = false;
    // Reincearca pana cand toti workerii au terminat si au raportat rezultatele (signal loss protection)
    while (!all_workers_done) {
+      printf("\n%s Lansare workeri (iter %d)\n", get_log_prefix(), launch_iter);
       // set workers to NULL
       for (size_t i = 0; i < str_search_iter; i++)
          worker_pids[i] = -1;
@@ -182,18 +184,10 @@ int main(int argc, char *argv[]) {
       
       // Wait for all started workers to finish
       printf("%s Waiting for workers to finish...\n", get_log_prefix());
-      for (size_t i = 0; i < str_search_iter; i++) {
-         if (worker_pids[i] == -1)
-            continue;
-         
-         int status;
-         if (waitpid(worker_pids[i], &status, 0) == -1) {
-            fprintf(stderr, "%s Error waiting for worker PID %d\n", get_log_prefix(), worker_pids[i]);
-         } else {
-            printf("%s Worker PID %d finished with status %d\n", get_log_prefix(), worker_pids[i], status);
-         }
-      }
-      
+      int pid, status_worker;
+      while((pid = wait(&status_worker)) != -1); // asteapta toti copii
+      printf("%s Toti workerii au terminat.\n", get_log_prefix());
+
       // Check if all workers have reported results
       int done_count = 0;
       for (size_t i = 0; i < str_search_iter; i++) {
@@ -208,6 +202,8 @@ int main(int argc, char *argv[]) {
       } else {
          printf("%s Not all workers done yet (%d/%zu). Retrying...\n", get_log_prefix(), done_count, str_search_iter);
       }
+
+      launch_iter++;
    }
 
    int total_matches = 0;
