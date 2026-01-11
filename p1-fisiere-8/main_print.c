@@ -2,13 +2,15 @@
 
 int main(int argc, char *argv[]) {
    if (argc != 2) {
-      fprintf(stderr, "Usage: %s <file>\n", argv[0]);
+      char msg[100];
+      snprintf(msg, sizeof(msg), "Usage: %s <file>", argv[0]);
+      perror(msg);
       return -1;
    }
    const char *file = argv[1];
    BinMatrix* bm = BinMat_load_file(file);
    if (bm == NULL) {
-      fprintf(stderr, "Eroare incarcare '%s' matrice din fisier\n", file);  
+      perror("Eroare incarcare matrice din fisier");  
       return -1; 
    }
    

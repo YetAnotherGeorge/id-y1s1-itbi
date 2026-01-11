@@ -67,7 +67,9 @@ void master_sigusr1_handler(int signum, siginfo_t* info, void* context) {
    int id = received_value >> 16; // keep higher 16 bits as worker id
    int pos = received_value & 0xFFFF; // keep lower 16 bits as match result (0 = no match, 1 = match)
    if (WORKER_RESULTS == NULL) {
-      fprintf(stderr, "%s WORKER_RESULTS is NULL in signal handler\n", get_log_prefix());
+      char msg[100];
+      snprintf(msg, sizeof(msg), "%s WORKER_RESULTS is NULL in signal handler", get_log_prefix());
+      perror(msg);
       return;
    }
    WORKER_RESULTS[id] = pos;
@@ -94,7 +96,9 @@ void main_worker(const char* arg_search, const char* arg_txt, size_t start_pos, 
    union sigval value;
    value.sival_int = signal_value; // trimite pozitia gasita
    if (sigqueue(master_pid, SIGUSR1, value) == -1) {
-      fprintf(stderr, "%s could not send SIGUSR1 to master\n", get_log_prefix());
+      char msg[100];
+      snprintf(msg, sizeof(msg), "%s could not send SIGUSR1 to master", get_log_prefix());
+      perror(msg);
    } else {
       //printf("%s sent SIGUSR1 to master with value %d\n", get_log_prefix(), value.sival_int);
    }
@@ -124,7 +128,9 @@ int main(int argc, char *argv[]) {
 
    // Atasare handler
    if (sigaction(SIGUSR1, &sa, NULL) == -1) {
-      fprintf(stderr, "%s could not register SIGUSR1 handler\n", get_log_prefix());
+      char msg[100];
+      snprintf(msg, sizeof(msg), "%s could not register SIGUSR1 handler", get_log_prefix());
+      perror(msg);
       exit(EXIT_FAILURE);
    } else {
       printf("%s Master process registered SIGUSR1 handler successfully.\n", get_log_prefix());
@@ -171,7 +177,9 @@ int main(int argc, char *argv[]) {
 
          pid_t pid_worker = fork();
          if (pid_worker < 0) { // could not create worker
-            fprintf(stderr, "%s Fork failed for worker at index %zu\n", get_log_prefix(), i);
+            char msg[100];
+            snprintf(msg, sizeof(msg), "%s Fork failed for worker at index %zu", get_log_prefix(), i);
+            perror(msg);
             exit(EXIT_FAILURE);
          } else if (pid_worker == 0) { // worker created, inside worker process
             main_worker(arg_search, arg_txt, i, SELF_PID);

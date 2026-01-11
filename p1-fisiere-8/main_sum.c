@@ -3,7 +3,9 @@
 
 int main(int argc, char *argv[]) {
    if (argc != 4) {
-      fprintf(stderr, "Usage: %s <file1> <file2> <file_OUT>\n", argv[0]);
+      char msg[100];
+      snprintf(msg, sizeof(msg), "Usage: %s <file1> <file2> <file_OUT>", argv[0]);
+      perror(msg);
       return -1;
    }
 
@@ -13,7 +15,7 @@ int main(int argc, char *argv[]) {
 
    BinMatrix* bm1 = BinMat_load_file(file1);
    if (bm1 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice din fisier\n");  
+      perror("Eroare incarcare matrice din fisier");  
       return -1;
    }
    printf("Matrix bm1 loaded from file:\n");
@@ -21,7 +23,7 @@ int main(int argc, char *argv[]) {
 
    BinMatrix* bm2 = BinMat_load_file(file2);
    if (bm2 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice din fisier\n");  
+      perror("Eroare incarcare matrice din fisier");  
       BinMat_free_ptr(bm1);
       return -1;
    }
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]) {
 
    BinMatrix* bm_sum = BinMat_sum(bm1, bm2);
    if (bm_sum == NULL) {
-      fprintf(stderr, "Eroare calcul suma matrici\n");  
+      perror("Eroare calcul suma matrici");  
       BinMat_free_ptr(bm1);
       BinMat_free_ptr(bm2);
       return -1;
