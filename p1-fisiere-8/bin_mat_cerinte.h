@@ -1,104 +1,80 @@
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h> // contine mode_t
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h> // malloc, free
-#include <math.h>
 #include "bin_mat.h"
 
-/**
- * creaza in fisierul f o matrice m x n initializata cu 0
- */
-void new_matrix(int f, int m, int n) {
-  BinMatrix* bm = BinMat_create(m, n);
-  BinMat_save(bm, f);
-  BinMat_free_ptr(bm);
+/// @brief creaza in fisierul f o matrice m x n initializata cu 0. Apelantul trebuie sa inchida fisierul
+/// @param f file descriptor
+/// @param m rows
+/// @param n cols
+void new(int f, int m, int n) {
+   fseek(f, 0, SEEK_SET); // incepem de la inceputul fisierului
+
+   char id[4] = {'b', 'm', 'a', 't'};
+   write(f, id, sizeof(id));
+   write(f, &m, sizeof(m));
+   write(f, &n, sizeof(n));
+   
+   float zero = 0.0f;
+   for (int i = 0; i < m * n; i++) {
+      write(f, &zero, sizeof(float));
+   }
 }
-/**
- * Read file, return value at (i, j) or NAN on error
- */
+
+/// @brief Muta 'cursorul' in fisier la pozitia (i, j) si returneaza valoarea. 
+/// @param f File descriptor
+/// @param i row_idx
+/// @param j col_idx
+/// @return Returneaza NAN in caz de erorare
 float get(int f, int i, int j) {
-   // not the most efficient way, should read from file only up to OFFSET + i * cols + j
-   BinMatrix* bm = BinMat_load(f);
-   if (bm == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice din fisier\n");  
+   fseek(f, 0, SEEK_SET); // incepem de la inceputul fisierului
+   // Citeste header
+   char id[4];
+   read(f, id, sizeof(id));
+   if (id[0] != 'b' || id[1] != 'm' || id[2] != 'a' || id[3] != 't') {
+      fprintf(stderr, "Eroare: fisier invalid, id incorect\n");
       return NAN;
    }
-   float value = BinMat_get(bm, i, j);
-   BinMat_free_ptr(bm);
+
+   // Citeste dimensiuni
+   int rows, cols;
+   read(f, &rows, sizeof(rows));
+   read(f, &cols, sizeof(cols));
+   if (i < 0 || i >= rows || j < 0 || j >= cols) {
+      fprintf(stderr, "Eroare: index (%d,%d) out of bounds (%d,%d)\n", i, j, rows, cols);
+      return NAN;
+   }
+   
+   size_t offset = (i * cols + j) * sizeof(float);
+   fseek(f, offset, SEEK_CUR);
+   
+   float value;
+   read(f, &value, sizeof(value));
    return value;
 }
-/**
- * Set value, write to file
- */
+
+/// @brief 
+/// @param f 
+/// @param i 
+/// @param j 
+/// @param x 
 void set(int f, int i, int j, float x) {
-  BinMatrix* bm = BinMat_load(f);
-   if (bm == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice din fisier\n");  
-      return;
-   }
-   BinMat_set(bm, i, j, x);
-   BinMat_save(bm, f);
-   BinMat_free_ptr(bm);  
-}
-
-/**
- * calculate sum (if compatible sizes) into file descriptor f
- */
-void sum(int f1, int f2, int f) {
-   // load matrices
-   BinMatrix* bm1 = BinMat_load(f1);
-   if (bm1 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice 1 din fisier\n");  
-      return;
-   }
-   BinMatrix* bm2 = BinMat_load(f2);
-   if (bm2 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice 2 din fisier\n");  
-      BinMat_free_ptr(bm1);
-      return;
+   fseek(f, 0, SEEK_SET); // incepem de la inceputul fisierului
+   // Citeste header
+   char id[4];
+   read(f, id, sizeof(id));
+   if (id[0] != 'b' || id[1] != 'm' || id[2] != 'a' || id[3] != 't') {
+      fprintf(stderr, "Eroare: fisier invalid, id incorect\n");
    }
 
-   BinMatrix* bm_sum = BinMat_sum(bm1, bm2);
-   if (bm_sum == NULL) {
-      fprintf(stderr, "Eroare calcul suma matrici\n");  
-      BinMat_free_ptr(bm1);
-      BinMat_free_ptr(bm2);
-      return;
+   // Citeste dimensiuni
+   int rows, cols;
+   read(f, &rows, sizeof(rows));
+   read(f, &cols, sizeof(cols));
+   if (i < 0 || i >= rows || j < 0 || j >= cols) {
+      fprintf(stderr, "Eroare: index (%d,%d) out of bounds (%d,%d)\n", i, j, rows, cols);
+      return NAN;
    }
-   BinMat_save(bm_sum, f);
-   BinMat_free_ptr(bm1);
-   BinMat_free_ptr(bm2);
-   BinMat_free_ptr(bm_sum);
-}
-
-/**
- * calculate product (if compatible sizes) into file descriptor f
- */
-void pro(int f1, int f2, int f) {
-  // load matrices
-   BinMatrix* bm1 = BinMat_load(f1);
-   if (bm1 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice 1 din fisier\n");  
-      return;
-   }
-   BinMatrix* bm2 = BinMat_load(f2);
-   if (bm2 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice 2 din fisier\n");  
-      BinMat_free_ptr(bm1);
-      return;
-   }
-
-   BinMatrix* bm_prod = BinMat_prod(bm1, bm2);
-   if (bm_prod == NULL) {
-      fprintf(stderr, "Eroare calcul produs matrici\n");  
-      BinMat_free_ptr(bm1);
-      BinMat_free_ptr(bm2);
-      return;
-   }
-   BinMat_save(bm_prod, f);
-   BinMat_free_ptr(bm1);
-   BinMat_free_ptr(bm2);
-   BinMat_free_ptr(bm_prod);
+   
+   // Muta la pozitia (i, j)
+   size_t offset = (i * cols + j) * sizeof(float);
+   fseek(f, offset, SEEK_CUR);
+   write(f, &x, sizeof(x));
 }

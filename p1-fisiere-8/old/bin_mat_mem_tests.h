@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h> // malloc, free
 #include <math.h>
-#include "bin_mat_cerinte.h"
+#include "bin_mat_mem_utils.h"
 
 void BinMat_create_write_test() {
    printf("Implementare matrici dreptunghiulare de numere reale\n");
@@ -21,6 +21,7 @@ void BinMat_create_write_test() {
 
    printf("Saved mat_1.bmat\n");
 }
+
 void BinMat_load_test() {
    int mat_1_fd = open("./files/mat_1.bmat", O_RDONLY);
    BinMatrix* bmat_loaded = BinMat_load(mat_1_fd);
@@ -30,11 +31,13 @@ void BinMat_load_test() {
    }
    close(mat_1_fd);
 }
+
 void BinMat_test2() {
    BinMatrix* bm = BinMat_create(3, 3);
    BinMat_set_diagonal(bm, 1.0f);
    BinMat_print(bm);
 }
+
 void BinMat_test_sum() {
    BinMatrix* bm1 = BinMat_create(2,2);
    BinMat_fill_sequential(bm1);
@@ -57,6 +60,7 @@ void BinMat_test_sum() {
    BinMat_free_ptr(bm1);
    BinMat_free_ptr(bm2);
 }
+
 void BinMat_test_product() {
    BinMatrix* bm1 = BinMat_create(3,4);
    BinMat_fill_random(bm1, 0.0f, 9.0f);
@@ -79,6 +83,7 @@ void BinMat_test_product() {
    BinMat_free_ptr(bm1);
    BinMat_free_ptr(bm2);
 }
+
 void BinMat_test_save(int rows, int cols, const char* filename) {
    BinMatrix* bm = BinMat_create(rows, cols);
    BinMat_fill_random(bm, 0.0f, 9.0f);
