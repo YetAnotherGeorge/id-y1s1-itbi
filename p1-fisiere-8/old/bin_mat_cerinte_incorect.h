@@ -57,7 +57,7 @@ void sum(int f1, int f2, int f) {
    }
    BinMatrix* bm2 = BinMat_load(f2);
    if (bm2 == NULL) {
-      fprintf(stderr, "Eroare incarcare matrice 2 din fisier\n");  
+      fprintf(stderr, "Eroare incarcare matrice 2 din fisier\n");
       BinMat_free_ptr(bm1);
       return;
    }

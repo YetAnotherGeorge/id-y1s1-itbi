@@ -1,6 +1,5 @@
 #include "bin_mat_cerinte.h"
 
-
 int main(int argc, char *argv[]) {
    if (argc != 4) {
       char msg[100];
@@ -13,37 +12,39 @@ int main(int argc, char *argv[]) {
    const char *file2 = argv[2];
    const char *file_out = argv[3];
 
-   BinMatrix* bm1 = BinMat_load_file(file1);
-   if (bm1 == NULL) {
-      perror("Eroare incarcare matrice din fisier");  
+   int f1 = open(file1, O_RDONLY);
+   if (f1 < 0) {
+      char msg[100];
+      snprintf(msg, sizeof(msg), "Eroare deschidere fisier '%s' pentru citire", file1);
+      perror(msg);
       return -1;
    }
-   printf("Matrix bm1 loaded from file:\n");
-   BinMat_print(bm1);
 
-   BinMatrix* bm2 = BinMat_load_file(file2);
-   if (bm2 == NULL) {
-      perror("Eroare incarcare matrice din fisier");  
-      BinMat_free_ptr(bm1);
+   int f2 = open(file2, O_RDONLY);
+   if (f2 < 0) {
+      char msg[100];
+      snprintf(msg, sizeof(msg), "Eroare deschidere fisier '%s' pentru citire", file2);
+      perror(msg);
+      close(f1);
       return -1;
    }
-   printf("Matrix bm2 loaded from file:\n");
-   BinMat_print(bm2);
 
-   BinMatrix* bm_sum = BinMat_sum(bm1, bm2);
-   if (bm_sum == NULL) {
-      perror("Eroare calcul suma matrici");  
-      BinMat_free_ptr(bm1);
-      BinMat_free_ptr(bm2);
+   int f_out = open(file_out, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+   if (f_out < 0) {
+      char msg[100];
+      snprintf(msg, sizeof(msg), "Eroare deschidere fisier '%s' pentru scriere", file_out);
+      perror(msg);
+      close(f1);
+      close(f2);
       return -1;
    }
-   printf("Sum matrix:\n");
-   BinMat_print(bm_sum);
-   // save to file
-   BinMat_save_file(bm_sum, file_out);
 
-   BinMat_free_ptr(bm1);
-   BinMat_free_ptr(bm2);
-   BinMat_free_ptr(bm_sum);
+   printf("Calculare suma matrici din '%s' si '%s' in '%s'\n", file1, file2, file_out);
+   sum(f1, f2, f_out);
+
+   close(f1);
+   close(f2);
+   close(f_out);
+
    return 0;
 }
